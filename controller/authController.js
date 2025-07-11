@@ -1,5 +1,6 @@
 const userModel = require("../models/userModel");
-const bcrypt = require('bcryptjs');
+const bcrypt = require("bcryptjs");
+const JWT = require("jsonwebtoken");
 
 const registerController = async (req, res) => {
   try {
@@ -22,7 +23,7 @@ const registerController = async (req, res) => {
 
     // hashing password
     var salt = bcrypt.genSaltSync(10);
-    const hashedPassword = await bcrypt.hash(password, salt); 
+    const hashedPassword = await bcrypt.hash(password, salt);
 
     const user = await userModel.create({
       userName,
@@ -48,7 +49,7 @@ const registerController = async (req, res) => {
 
 // Login
 
-const loginController = async(req, res) => {
+const loginController = async (req, res) => {
   try {
     const { email, password } = req.body;
     if (!email || !password) {
@@ -58,17 +59,33 @@ const loginController = async(req, res) => {
       });
     }
 
-    const user = await userModel.findOne({ email: email, password: password });
+    const user = await userModel.findOne({ email });
     if (!user) {
       return res.status(404).send({
         success: false,
-        message: "user not found or password mismatch",
+        message: "user not found",
       });
     }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(500).send({
+        success: false,
+        message: "Invalid credintials",
+      });
+    }
+
+    // token
+    const token = JWT.sign({ id: user._id }, process.env.JWT_SECRET, {
+      expiresIn: "7d",
+    });
+
+    user.password = undefined;
 
     res.status(200).send({
       success: true,
       message: "login successfully",
+      token,
       user,
     });
   } catch (error) {
