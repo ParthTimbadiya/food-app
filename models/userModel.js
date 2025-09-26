@@ -33,6 +33,10 @@ const userSchema = new mongoose.Schema(
       default:
         "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTSLU5_eUUGBfxfxRd4IquPiEwLbt4E_6RYMw&s",
     },
+    answer: {
+      type: String,
+      required: [true, "Answer is required"],
+    },
   },
   { timestamps: true }
 );
